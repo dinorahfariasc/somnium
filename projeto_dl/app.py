@@ -44,15 +44,18 @@ with col_input:
 
 # --- Função Async para Conversar com o Servidor MCP ---
 async def processar_sonho_completo(texto_sonho):
-    # 1. Configura a conexão com seu server.py
     server_params = StdioServerParameters(command="python", args=["server.py"])
     
     async with stdio_client(server_params) as (read, write):
         async with ClientSession(read, write) as session:
             await session.initialize()
             
-            # Passo A: Ler Memória (Opcional, mas bom pra contexto)
-            st.toast("🧠 Acessando memória...", icon="📖")
+            # PASSO NOVO: Salvar no Diário Primeiro! 💾
+            st.toast("💾 Salvando sonho no diário...", icon="💾")
+            await session.call_tool("salvar_sonho_no_diario", arguments={"relato": texto_sonho})
+            
+            # Passo A: Ler Memória (Agora vai incluir o sonho atual!)
+            st.toast("🧠 Acessando memória atualizada...", icon="📖")
             try:
                 res_hist = await session.call_tool("ler_historico_pessoal")
                 historico = res_hist.content[0].text
@@ -71,7 +74,6 @@ async def processar_sonho_completo(texto_sonho):
             msg_imagem = res_img.content[0].text
             
             return historico, contexto_rag, msg_imagem
-
 # --- Lógica Principal ---
 if analisar_btn and relato:
     with col_result:
